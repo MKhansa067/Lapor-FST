@@ -42,7 +42,7 @@ export async function Header() {
             <details>
               <summary className="profile-summary">
                 <span>Profil</span>
-                <span className="summary-chevron" aria-hidden="true"></span>
+                <span className="summary-chevron" aria-hidden="true">▾</span>
               </summary>
               <div className="profile-dropdown">
                 <div className="profile-name">{username}</div>
