@@ -28,7 +28,7 @@ export function ReportFilter({
 
       <details className="filter-wrap">
         <summary className="filter-button" aria-label="Filter laporan">
-          ⚙
+          <span aria-hidden="true">⚙</span>
         </summary>
         <div className="filter-panel">
           <label>
