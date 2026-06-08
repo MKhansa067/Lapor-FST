@@ -2,6 +2,7 @@ import { REPORT_STATUS_CLASS, REPORT_STATUS_LABEL } from "@/lib/constants";
 import type { ReportListRow } from "@/types/app";
 import { CommentForm } from "./comment-form";
 import { markReportClosed, updateReportStatus } from "@/app/actions/report";
+import { formatWibDate } from "@/lib/date";
 
 type MediaRow = {
   id: string;
@@ -26,7 +27,7 @@ type Props = {
   currentUserRole?: string;
 };
 
-function formatDate(value?: string | null) {
+function formatWibDate(value?: string | null) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("id-ID", {
     month: "long",
@@ -62,11 +63,11 @@ export function ReportDetailCards({ report, media, comments, currentUserId, curr
             </div>
             <div>
               <div className="label">Dibuat</div>
-              <div className="value">{formatDate(report.created_at)}</div>
+              <div className="value">{formatWibDate(report.created_at)}</div>
             </div>
             <div>
               <div className="label">Pembaruan terakhir</div>
-              <div className="value">{formatDate(report.updated_at)}</div>
+              <div className="value">{formatWibDate(report.updated_at)}</div>
             </div>
           </div>
         </section>
@@ -130,7 +131,7 @@ export function ReportDetailCards({ report, media, comments, currentUserId, curr
               <article className="card" key={comment.id}>
                 <strong>{comment.profiles?.username ?? "User"}</strong>
                 <p>{comment.body}</p>
-                <span className="help-text">{formatDate(comment.created_at)}</span>
+                <span className="help-text">{formatWibDate(comment.created_at)}</span>
               </article>
             ))}
           </div>
@@ -151,11 +152,11 @@ export function ReportDetailCards({ report, media, comments, currentUserId, curr
             </div>
             <div>
               <div className="label">Dibuat</div>
-              <div className="value">{formatDate(report.created_at)}</div>
+              <div className="value">{formatWibDate(report.created_at)}</div>
             </div>
             <div>
               <div className="label">Diperbarui</div>
-              <div className="value">{formatDate(report.updated_at)}</div>
+              <div className="value">{formatWibDate(report.updated_at)}</div>
             </div>
           </div>
 
