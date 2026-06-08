@@ -40,7 +40,10 @@ export async function Header() {
         <div className="profile-menu">
           {user ? (
             <details>
-              <summary className="profile-summary">Profil</summary>
+              <summary className="profile-summary">
+                <span>Profil</span>
+                <span className="summary-chevron" aria-hidden="true"></span>
+              </summary>
               <div className="profile-dropdown">
                 <div className="profile-name">{username}</div>
                 <Link href="/bookmarks">Bookmarks</Link>
