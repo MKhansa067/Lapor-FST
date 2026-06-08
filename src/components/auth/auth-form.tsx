@@ -47,7 +47,7 @@ export function AuthForm({ mode }: Props) {
       if (registerError) {
         setError(registerError.message);
       } else {
-        setMessage("Register berhasil. Cek email jika konfirmasi email aktif, lalu login.");
+        setMessage("Register berhasil. Silahkan klik login.");
       }
     }
 
