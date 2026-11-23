@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
@@ -24,6 +25,7 @@ function safeFileName(name: string) {
 export function ReportForm({ categories, rooms }: Props) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [duplicateReportId, setDuplicateReportId] = useState("");
   const [busy, setBusy] = useState(false);
   const [useOtherRoom, setUseOtherRoom] = useState(false);
 
@@ -31,6 +33,7 @@ export function ReportForm({ categories, rooms }: Props) {
     event.preventDefault();
     setBusy(true);
     setError("");
+    setDuplicateReportId("");
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -69,20 +72,16 @@ export function ReportForm({ categories, rooms }: Props) {
     const selectedRoom = String(formData.get("room_id") ?? "");
     const roomOther = String(formData.get("room_other") ?? "").trim();
 
-    const { data: report, error: insertError } = await supabase
-      .from("reports")
-      .insert({
-        author_id: userData.user.id,
-        title: String(formData.get("title") ?? ""),
-        category_id: String(formData.get("category_id") ?? "") || null,
-        room_id: useOtherRoom ? null : selectedRoom || null,
-        room_other: useOtherRoom ? roomOther : null,
-        description: String(formData.get("description") ?? ""),
-        observation_result: String(formData.get("observation_result") ?? ""),
-        expected_result: String(formData.get("expected_result") ?? "")
-      })
-      .select("id")
-      .single();
+    const { data: result, error: insertError } = await supabase.rpc("create_report", {
+      _title: String(formData.get("title") ?? ""),
+      _description: String(formData.get("description") ?? ""),
+      _category_id: String(formData.get("category_id") ?? "") || null,
+      _room_id: useOtherRoom ? null : selectedRoom || null,
+      _room_other: useOtherRoom ? roomOther : null,
+      _observation_result: String(formData.get("observation_result") ?? ""),
+      _expected_result: String(formData.get("expected_result") ?? "")
+    });
+    const report = result?.[0];
 
     if (insertError || !report) {
       setError(insertError?.message ?? "Gagal membuat laporan.");
@@ -90,8 +89,23 @@ export function ReportForm({ categories, rooms }: Props) {
       return;
     }
 
+    if (report.duplicate_report_id) {
+      setDuplicateReportId(report.duplicate_report_id);
+      setError("Laporan sudah ada.");
+      setBusy(false);
+      return;
+    }
+
+    if (!report.created_report_id) {
+      setError("Gagal membuat laporan.");
+      setBusy(false);
+      return;
+    }
+
+    const reportId = report.created_report_id;
+
     for (const photo of photoFiles) {
-      const path = `${userData.user.id}/${report.id}/${crypto.randomUUID()}-${safeFileName(photo.name)}`;
+      const path = `${userData.user.id}/${reportId}/${crypto.randomUUID()}-${safeFileName(photo.name)}`;
       const { error: uploadError } = await supabase.storage.from("report-images").upload(path, photo);
 
       if (uploadError) {
@@ -101,7 +115,7 @@ export function ReportForm({ categories, rooms }: Props) {
       }
 
       await supabase.from("report_media").insert({
-        report_id: report.id,
+        report_id: reportId,
         uploader_id: userData.user.id,
         media_type: "image",
         storage_bucket: "report-images",
@@ -113,7 +127,7 @@ export function ReportForm({ categories, rooms }: Props) {
     }
 
     if (videoFile) {
-      const path = `${userData.user.id}/${report.id}/${crypto.randomUUID()}-${safeFileName(videoFile.name)}`;
+      const path = `${userData.user.id}/${reportId}/${crypto.randomUUID()}-${safeFileName(videoFile.name)}`;
       const { error: uploadError } = await supabase.storage.from("report-videos").upload(path, videoFile);
 
       if (uploadError) {
@@ -123,7 +137,7 @@ export function ReportForm({ categories, rooms }: Props) {
       }
 
       await supabase.from("report_media").insert({
-        report_id: report.id,
+        report_id: reportId,
         uploader_id: userData.user.id,
         media_type: "video",
         storage_bucket: "report-videos",
@@ -134,7 +148,7 @@ export function ReportForm({ categories, rooms }: Props) {
       });
     }
 
-    router.push(`/laporan/detail/${report.id}`);
+    router.push(`/laporan/detail/${reportId}`);
     router.refresh();
   }
 
@@ -219,6 +233,9 @@ export function ReportForm({ categories, rooms }: Props) {
       </label>
 
       {error ? <div className="error-text">{error}</div> : null}
+      {duplicateReportId ? (
+        <Link href={`/laporan/detail/${duplicateReportId}`}>Lihat laporan yang sudah ada</Link>
+      ) : null}
 
       <div className="form-actions">
         <button className="btn primary" type="submit" disabled={busy}>
